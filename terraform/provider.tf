@@ -1,6 +1,6 @@
 terraform {
   cloud {
-    organization = "projet-ops"
+    organization = "projet_ops"
     workspaces {
       name = "projet-ops"
     }
