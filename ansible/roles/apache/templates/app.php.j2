@@ -1,0 +1,58 @@
+<?php
+// Page applicative déployée par Ansible
+$info = [
+    "projet"    => "projet-ops",
+    "serveur"   => "{{ inventory_hostname }}",
+    "php"       => phpversion(),
+    "apache"    => apache_get_version(),
+    "date"      => date("Y-m-d H:i:s"),
+    "déployé"   => "GitHub Actions → Ansible",
+];
+?>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>App PHP — projet-ops</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: monospace;
+      background: #0f172a;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 40px;
+      max-width: 600px;
+      width: 90%;
+    }
+    h1   { color: #4ade80; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    td   { padding: 10px 14px; border-bottom: 1px solid #334155; }
+    td:first-child { color: #94a3b8; width: 140px; }
+    td:last-child  { color: #f1f5f9; font-weight: bold; }
+    .back { display:inline-block; margin-top:24px; color:#38bdf8; text-decoration:none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Application PHP</h1>
+    <table>
+      <?php foreach ($info as $key => $value): ?>
+      <tr>
+        <td><?= htmlspecialchars($key) ?></td>
+        <td><?= htmlspecialchars((string)$value) ?></td>
+      </tr>
+      <?php endforeach; ?>
+    </table>
+    <a class="back" href="/">← Retour</a>
+  </div>
+</body>
+</html>

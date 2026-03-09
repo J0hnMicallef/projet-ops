@@ -1,0 +1,31 @@
+---
+- name: Mettre à jour APT
+  raw: apt-get update -qq
+
+- name: Installer les outils de base
+  raw: apt-get install -y curl
+
+- name: Vérifier qu'Apache est actif
+  raw: apache2ctl status || apache2ctl start
+
+- name: Créer le répertoire du site
+  raw: mkdir -p /var/www/html/projet-ops
+
+- name: Déployer la page d'accueil HTML
+  copy:
+    dest: /var/www/html/index.html
+    content: "{{ lookup('template', '../templates/index.html.j2') }}"
+
+- name: Déployer la page PHP applicative
+  copy:
+    dest: /var/www/html/app.php
+    content: "{{ lookup('template', '../templates/app.php.j2') }}"
+
+- name: Vérifier qu'Apache tourne bien
+  raw: curl -s -o /dev/null -w "%{http_code}" http://localhost/
+  register: http_status
+  changed_when: false
+
+- name: Afficher le statut HTTP
+  debug:
+    msg: "Apache répond → HTTP {{ http_status.stdout }}"

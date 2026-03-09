@@ -1,0 +1,7 @@
+---
+- name: Configurer le serveur et déployer l'application
+  hosts: all
+  gather_facts: false
+
+  roles:
+    - apache

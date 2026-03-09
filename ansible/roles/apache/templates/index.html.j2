@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>projet-ops</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 40px;
+      max-width: 600px;
+      width: 90%;
+      text-align: center;
+    }
+    h1 { color: #38bdf8; margin-bottom: 8px; }
+    p  { color: #94a3b8; }
+    .badge {
+      display: inline-block;
+      background: #0f172a;
+      border: 1px solid #38bdf8;
+      color: #38bdf8;
+      border-radius: 6px;
+      padding: 6px 14px;
+      margin: 6px;
+      font-size: 0.85rem;
+    }
+    .link {
+      display: inline-block;
+      margin-top: 24px;
+      color: #38bdf8;
+      text-decoration: none;
+      border: 1px solid #38bdf8;
+      padding: 10px 24px;
+      border-radius: 6px;
+    }
+    .link:hover { background: #38bdf8; color: #0f172a; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1> projet-ops</h1>
+    <p>Infrastructure déployée automatiquement</p>
+
+    <br>
+    <span class="badge">Terraform</span>
+    <span class="badge">Ansible</span>
+    <span class="badge">GitHub Actions</span>
+    <span class="badge">Apache</span>
+    <span class="badge">PHP 8.2</span>
+
+    <br><br>
+    <p>Serveur : <strong>{{ inventory_hostname }}</strong></p>
+
+    <a class="link" href="/app.php">→ Voir la page PHP</a>
+  </div>
+</body>
+</html>
