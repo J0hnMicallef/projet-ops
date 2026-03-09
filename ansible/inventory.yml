@@ -3,3 +3,4 @@ all:
     projet-ops-server:
       ansible_connection: docker
       ansible_user: root
+      ansible_remote_tmp: /tmp/.ansible/tmp
