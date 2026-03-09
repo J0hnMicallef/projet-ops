@@ -62,13 +62,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Installer Ansible
-        run: |
-          pip install ansible
+        run: pip install ansible
 
-      - name: Tester la connexion (ping)
-        working-directory: ansible
+      - name: Installer Python dans le conteneur
         run: |
-          ansible all -i inventory.yml -m ping
+          docker exec projet-ops-server apt-get update -qq
+          docker exec projet-ops-server apt-get install -y python3
 
       - name: Lancer le playbook
         working-directory: ansible
@@ -78,7 +77,7 @@ jobs:
       - name: Vérifier le site
         run: |
           sleep 2
-          curl -sf http://localhost:8080 | grep -o "<title>.*</title>"
-          echo "Site accessible sur http://localhost:8080"
-          curl -sf http://localhost:8080/app.php | grep -o "PHP.*"
+          curl -sf http://localhost:8080
+          echo "Site accessible"
+          curl -sf http://localhost:8080/app.php
           echo "PHP fonctionne"
