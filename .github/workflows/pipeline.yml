@@ -95,19 +95,19 @@ jobs:
 
       - name: Installer Python3 dans les conteneurs
         run: |
-          echo "→ Python3.13 dans projet-ops-bastion"
-          docker exec projet-ops-bastion bash -c "apt-get update -qq && apt-get install -y software-properties-common -qq && add-apt-repository -y ppa:deadsnakes/ppa && apt-get update -qq && apt-get install -y python3.13"
-
-          for c in projet-ops-web1 projet-ops-web2; do
+          # Bastion, web apps, haproxy → apt-get
+          for c in projet-ops-bastion projet-ops-web1 projet-ops-web2; do
             echo "→ Python3 dans $c"
             docker exec $c apt-get update -qq
             docker exec $c apt-get install -y python3
           done
 
+          # HAProxy → root forcé
           echo "→ Python3 dans projet-ops-haproxy"
           docker exec -u root projet-ops-haproxy apt-get update -qq
           docker exec -u root projet-ops-haproxy apt-get install -y python3
 
+          # PostgreSQL → Alpine → apk
           echo "→ Python3 dans projet-ops-postgres"
           docker exec projet-ops-postgres apk add --no-cache python3
 
