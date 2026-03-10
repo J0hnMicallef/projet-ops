@@ -1,14 +1,3 @@
-# ─────────────────────────────────────────────────────────────────────
-# HAPROXY — Load Balancer
-#
-# Reçoit tout le trafic HTTP (port 80) et le répartit
-# en round-robin entre les serveurs web.
-#
-# Connecté à deux réseaux :
-#   - public-net  → reçoit les requêtes entrantes
-#   - private-net → atteint les web apps
-# ─────────────────────────────────────────────────────────────────────
-
 resource "docker_image" "haproxy" {
   name         = "haproxy:2.8-alpine"
   keep_locally = true
@@ -37,10 +26,13 @@ resource "docker_container" "haproxy" {
     external = var.haproxy_port
   }
 
-  entrypoint = ["/bin/sh", "-c"]
-  command = [
-    "echo 'global\\n  daemon\\ndefaults\\n  mode http\\n  timeout connect 5s\\n  timeout client 30s\\n  timeout server 30s\\nfrontend http_front\\n  bind *:80\\n  default_backend web_servers\\nbackend web_servers\\n  balance roundrobin\\n  server web1 172.30.0.10:80 check\\n  server web2 172.30.0.11:80 check' > /usr/local/etc/haproxy/haproxy.cfg && haproxy -f /usr/local/etc/haproxy/haproxy.cfg -W"
-  ]
+  # Le fichier haproxy.cfg est écrit sur le runner par le pipeline
+  # avant terraform apply, puis monté ici
+  volumes {
+    host_path      = "/tmp/haproxy.cfg"
+    container_path = "/usr/local/etc/haproxy/haproxy.cfg"
+    read_only      = true
+  }
 
   labels {
     label = "project"

@@ -26,6 +26,39 @@ jobs:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
           terraform_wrapper: false
 
+      # ── ÉCRIRE LA CONFIG HAPROXY AVANT TERRAFORM ───────────────────
+      - name: Créer haproxy.cfg sur le runner
+        run: |
+          cat > /tmp/haproxy.cfg << 'EOF'
+          global
+              daemon
+              maxconn 256
+
+          defaults
+              mode    http
+              timeout connect 5s
+              timeout client  30s
+              timeout server  30s
+
+          frontend http_front
+              bind *:80
+              default_backend web_servers
+
+          backend web_servers
+              balance roundrobin
+              option  httpchk GET /app.php
+              server  web1 172.30.0.10:80 check
+              server  web2 172.30.0.11:80 check
+
+          listen stats
+              bind *:8404
+              stats enable
+              stats uri /stats
+              stats refresh 10s
+          EOF
+          echo "=== Config HAProxy ==="
+          cat /tmp/haproxy.cfg
+
       # ── TERRAFORM ──────────────────────────────────────────────────
       - name: terraform init
         working-directory: terraform
@@ -57,24 +90,20 @@ jobs:
 
       - name: Attendre que les conteneurs soient stables
         run: |
-          echo "Attente 10s..."
           sleep 10
           docker ps --format "table {{.Names}}\t{{.Status}}"
 
       - name: Installer Python3 dans les conteneurs
         run: |
-          # Bastion et web apps → Ubuntu → apt-get
           for c in projet-ops-bastion projet-ops-web1 projet-ops-web2; do
             echo "→ Python3 (apt) dans $c"
             docker exec $c apt-get update -qq
             docker exec $c apt-get install -y python3
           done
-
-          # HAProxy → Alpine → apk
           echo "→ Python3 (apk) dans projet-ops-haproxy"
           docker exec projet-ops-haproxy apk add --no-cache python3
 
-      - name: Ansible ping — vérifier la connexion à tous les hosts
+      - name: Ansible ping
         working-directory: ansible
         run: ansible all -i inventory.yml -m ping
 
