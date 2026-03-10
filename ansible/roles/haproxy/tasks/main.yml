@@ -23,7 +23,6 @@
 
     backend web_servers
         balance roundrobin
-        option  httpchk GET /app.php
         server  web1 172.30.0.10:80 check
         server  web2 172.30.0.11:80 check
 
@@ -44,8 +43,8 @@
   raw: wget -qO- http://localhost/app.php | grep -o "projet-ops" | head -1
   register: haproxy_check
   changed_when: false
-  retries: 3
-  delay: 2
+  retries: 5
+  delay: 3
 
 - name: Statut HAProxy
   debug:

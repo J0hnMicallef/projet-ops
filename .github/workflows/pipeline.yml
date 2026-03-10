@@ -120,16 +120,21 @@ jobs:
         run: ansible-playbook -i inventory.yml playbooks/site.yml -v
 
       # ── VÉRIFICATION ───────────────────────────────────────────────
+      - name: Attendre que HAProxy soit prêt
+        run: |
+          echo "Attente 5s que HAProxy propage la config..."
+          sleep 5
+
       - name: Afficher la page via HAProxy (requête 1)
         run: |
           echo "=== Requête 1 ==="
-          curl -sf http://localhost:80/app.php
+          curl -sf --retry 5 --retry-delay 2 --retry-all-errors http://localhost:80/app.php
           echo ""
 
       - name: Afficher la page via HAProxy (requête 2)
         run: |
           echo "=== Requête 2 ==="
-          curl -sf http://localhost:80/app.php
+          curl -sf --retry 5 --retry-delay 2 --retry-all-errors http://localhost:80/app.php
           echo ""
 
       - name: Vérifier les visites dans PostgreSQL
