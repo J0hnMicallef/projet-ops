@@ -1,5 +1,5 @@
 resource "docker_image" "haproxy" {
-  name         = "haproxy:2.8-alpine"
+  name         = "haproxy:2.8"
   keep_locally = true
 }
 

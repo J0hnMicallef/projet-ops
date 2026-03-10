@@ -95,13 +95,11 @@ jobs:
 
       - name: Installer Python3 dans les conteneurs
         run: |
-          for c in projet-ops-bastion projet-ops-web1 projet-ops-web2; do
-            echo "→ Python3 (apt) dans $c"
+          for c in projet-ops-bastion projet-ops-haproxy projet-ops-web1 projet-ops-web2; do
+            echo "→ Python3 dans $c"
             docker exec $c apt-get update -qq
             docker exec $c apt-get install -y python3
           done
-          echo "→ Python3 (apk) dans projet-ops-haproxy"
-          docker exec projet-ops-haproxy apk add --no-cache python3
 
       - name: Ansible ping
         working-directory: ansible
