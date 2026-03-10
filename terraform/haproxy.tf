@@ -37,28 +37,9 @@ resource "docker_container" "haproxy" {
     external = var.haproxy_port
   }
 
-  # Config minimale pour démarrer — Ansible écrasera cette config
+  entrypoint = ["/bin/sh", "-c"]
   command = [
-    "sh", "-c",
-    <<-CMD
-      cat > /usr/local/etc/haproxy/haproxy.cfg << 'EOF'
-      global
-        daemon
-      defaults
-        mode http
-        timeout connect 5s
-        timeout client  30s
-        timeout server  30s
-      frontend http_front
-        bind *:80
-        default_backend web_servers
-      backend web_servers
-        balance roundrobin
-        server web1 172.30.0.10:80 check
-        server web2 172.30.0.11:80 check
-      EOF
-      haproxy -f /usr/local/etc/haproxy/haproxy.cfg
-    CMD
+    "echo 'global\\n  daemon\\ndefaults\\n  mode http\\n  timeout connect 5s\\n  timeout client 30s\\n  timeout server 30s\\nfrontend http_front\\n  bind *:80\\n  default_backend web_servers\\nbackend web_servers\\n  balance roundrobin\\n  server web1 172.30.0.10:80 check\\n  server web2 172.30.0.11:80 check' > /usr/local/etc/haproxy/haproxy.cfg && haproxy -f /usr/local/etc/haproxy/haproxy.cfg -W"
   ]
 
   labels {

@@ -55,13 +55,24 @@ jobs:
       - name: Installer Ansible
         run: pip install ansible
 
-      - name: Installer Python3 dans les conteneurs (requis par Ansible)
+      - name: Attendre que les conteneurs soient stables
         run: |
-          for c in projet-ops-bastion projet-ops-haproxy projet-ops-web1 projet-ops-web2; do
-            echo "→ Python3 dans $c"
+          echo "Attente 10s..."
+          sleep 10
+          docker ps --format "table {{.Names}}\t{{.Status}}"
+
+      - name: Installer Python3 dans les conteneurs
+        run: |
+          # Bastion et web apps → Ubuntu → apt-get
+          for c in projet-ops-bastion projet-ops-web1 projet-ops-web2; do
+            echo "→ Python3 (apt) dans $c"
             docker exec $c apt-get update -qq
             docker exec $c apt-get install -y python3
           done
+
+          # HAProxy → Alpine → apk
+          echo "→ Python3 (apk) dans projet-ops-haproxy"
+          docker exec projet-ops-haproxy apk add --no-cache python3
 
       - name: Ansible ping — vérifier la connexion à tous les hosts
         working-directory: ansible
@@ -72,13 +83,13 @@ jobs:
         run: ansible-playbook -i inventory.yml playbooks/site.yml -v
 
       # ── VÉRIFICATION ───────────────────────────────────────────────
-      - name: Afficher la page via HAProxy (requête 1 → web1 ou web2)
+      - name: Afficher la page via HAProxy (requête 1)
         run: |
           echo "=== Requête 1 ==="
           curl -sf http://localhost:80/app.php
           echo ""
 
-      - name: Afficher la page via HAProxy (requête 2 → serveur différent)
+      - name: Afficher la page via HAProxy (requête 2)
         run: |
           echo "=== Requête 2 ==="
           curl -sf http://localhost:80/app.php
