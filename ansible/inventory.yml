@@ -7,6 +7,7 @@ all:
           ansible_connection: docker
           ansible_user: root
           ansible_remote_tmp: /tmp/.ansible/tmp
+          ansible_python_interpreter: /usr/bin/python3.13
 
     loadbalancer:
       hosts:
@@ -14,6 +15,7 @@ all:
           ansible_connection: docker
           ansible_user: root
           ansible_remote_tmp: /tmp/.ansible/tmp
+          ansible_python_interpreter: /usr/bin/python3.13
 
     webservers:
       hosts:
@@ -21,11 +23,13 @@ all:
           ansible_connection: docker
           ansible_user: root
           ansible_remote_tmp: /tmp/.ansible/tmp
+          ansible_python_interpreter: /usr/bin/python3.13
           server_id: "web1"
         projet-ops-web2:
           ansible_connection: docker
           ansible_user: root
           ansible_remote_tmp: /tmp/.ansible/tmp
+          ansible_python_interpreter: /usr/bin/python3.13
           server_id: "web2"
 
     database:
@@ -34,3 +38,4 @@ all:
           ansible_connection: docker
           ansible_user: root
           ansible_remote_tmp: /tmp/.ansible/tmp
+          ansible_python_interpreter: /usr/bin/python3
