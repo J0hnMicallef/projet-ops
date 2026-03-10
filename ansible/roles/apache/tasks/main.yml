@@ -10,8 +10,8 @@
     apt-get install -y libpq-dev curl
     docker-php-ext-install pdo pdo_pgsql
 
-- name: Redémarrer Apache pour charger les extensions PHP
-  raw: apache2ctl restart || true
+- name: Recharger Apache pour charger les extensions PHP
+  raw: apache2ctl graceful || apache2ctl start || true
 
 - name: Déployer la page d'accueil (redirige vers app.php)
   copy:
