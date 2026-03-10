@@ -26,12 +26,10 @@ resource "docker_container" "haproxy" {
     external = var.haproxy_port
   }
 
-  # Le fichier haproxy.cfg est écrit sur le runner par le pipeline
-  # avant terraform apply, puis monté ici
   volumes {
     host_path      = "/tmp/haproxy.cfg"
     container_path = "/usr/local/etc/haproxy/haproxy.cfg"
-    read_only      = true
+    read_only      = false
   }
 
   labels {
