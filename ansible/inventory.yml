@@ -1,5 +1,36 @@
 all:
-  hosts:
-    projet-ops-server:
-      ansible_connection: docker
-      ansible_user: root
+  children:
+
+    bastion:
+      hosts:
+        projet-ops-bastion:
+          ansible_connection: docker
+          ansible_user: root
+          ansible_remote_tmp: /tmp/.ansible/tmp
+
+    loadbalancer:
+      hosts:
+        projet-ops-haproxy:
+          ansible_connection: docker
+          ansible_user: root
+          ansible_remote_tmp: /tmp/.ansible/tmp
+
+    webservers:
+      hosts:
+        projet-ops-web1:
+          ansible_connection: docker
+          ansible_user: root
+          ansible_remote_tmp: /tmp/.ansible/tmp
+          server_id: "web1"
+        projet-ops-web2:
+          ansible_connection: docker
+          ansible_user: root
+          ansible_remote_tmp: /tmp/.ansible/tmp
+          server_id: "web2"
+
+    database:
+      hosts:
+        projet-ops-postgres:
+          ansible_connection: docker
+          ansible_user: root
+          ansible_remote_tmp: /tmp/.ansible/tmp

@@ -1,58 +1,141 @@
 <?php
-// Page applicative déployée par Ansible
-$info = [
-    "projet"    => "projet-ops",
-    "serveur"   => "{{ inventory_hostname }}",
-    "php"       => phpversion(),
-    "apache"    => apache_get_version(),
-    "date"      => date("Y-m-d H:i:s"),
-    "déployé"   => "GitHub Actions → Ansible",
+$server_id = getenv('SERVER_ID') ?: '{{ server_id }}';
+$db_config = [
+    'host'     => '{{ db_host }}',
+    'port'     => '{{ db_port }}',
+    'dbname'   => '{{ db_name }}',
+    'user'     => '{{ db_user }}',
+    'password' => '{{ db_password }}',
 ];
+
+$db_status = 'Non connecté';
+$visits    = [];
+$message   = '';
+$total     = 0;
+
+try {
+    $dsn = "pgsql:host={$db_config['host']};port={$db_config['port']};dbname={$db_config['dbname']}";
+    $pdo = new PDO($dsn, $db_config['user'], $db_config['password'], [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    ]);
+
+    $pdo->prepare("INSERT INTO visits (server_id, ip_address) VALUES (?, ?)")
+        ->execute([$server_id, $_SERVER['REMOTE_ADDR'] ?? 'unknown']);
+
+    $message = $pdo->query("SELECT content FROM messages ORDER BY id LIMIT 1")
+                   ->fetchColumn();
+
+    $visits = $pdo->query("SELECT server_id, COUNT(*) as total FROM visits GROUP BY server_id ORDER BY server_id")
+                  ->fetchAll(PDO::FETCH_ASSOC);
+
+    $total = $pdo->query("SELECT COUNT(*) FROM visits")->fetchColumn();
+
+    $db_status = 'Connecté à PostgreSQL ' . $db_config['host'];
+
+} catch (PDOException $e) {
+    $db_status = 'Erreur : ' . $e->getMessage();
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>App PHP — projet-ops</title>
+  <title>projet-ops — <?= htmlspecialchars($server_id) ?></title>
   <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
     body {
-      margin: 0;
-      font-family: monospace;
+      font-family: 'Segoe UI', Arial, sans-serif;
       background: #0f172a;
       color: #e2e8f0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       min-height: 100vh;
+      padding: 40px 20px;
     }
+    .container { max-width: 700px; margin: 0 auto; }
+    h1  { color: #38bdf8; font-size: 1.8rem; margin-bottom: 6px; }
+    h2  { color: #94a3b8; font-size: 1rem; margin-bottom: 30px; font-weight: normal; }
     .card {
       background: #1e293b;
       border: 1px solid #334155;
-      border-radius: 12px;
-      padding: 40px;
-      max-width: 600px;
-      width: 90%;
+      border-radius: 10px;
+      padding: 24px;
+      margin-bottom: 20px;
     }
-    h1   { color: #4ade80; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    td   { padding: 10px 14px; border-bottom: 1px solid #334155; }
-    td:first-child { color: #94a3b8; width: 140px; }
-    td:last-child  { color: #f1f5f9; font-weight: bold; }
-    .back { display:inline-block; margin-top:24px; color:#38bdf8; text-decoration:none; }
+    .card h3 {
+      color: #38bdf8;
+      margin-bottom: 16px;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    td    { padding: 10px 0; border-bottom: 1px solid #334155; }
+    td:first-child { color: #94a3b8; width: 180px; }
+    td:last-child  { color: #f1f5f9; font-weight: 500; }
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin: 3px;
+    }
+    .blue  { background: #1d4ed8; color: #bfdbfe; }
+    .green { background: #166534; color: #bbf7d0; }
+    .tip   { color: #64748b; font-size: 0.8rem; margin-top: 12px; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Application PHP</h1>
-    <table>
-      <?php foreach ($info as $key => $value): ?>
-      <tr>
-        <td><?= htmlspecialchars($key) ?></td>
-        <td><?= htmlspecialchars((string)$value) ?></td>
-      </tr>
-      <?php endforeach; ?>
-    </table>
-    <a class="back" href="/">← Retour</a>
+  <div class="container">
+
+    <h1>projet-ops</h1>
+    <h2>Infrastructure Terraform + Ansible + GitHub Actions</h2>
+
+    <div class="card">
+      <h3>Serveur actuel</h3>
+      <table>
+        <tr><td>Serveur ID</td>      <td><?= htmlspecialchars($server_id) ?></td></tr>
+        <tr><td>PHP</td>             <td><?= phpversion() ?></td></tr>
+        <tr><td>Apache</td>          <td><?= apache_get_version() ?></td></tr>
+        <tr><td>Base de données</td> <td><?= htmlspecialchars($db_status) ?></td></tr>
+        <tr><td>Date</td>            <td><?= date('Y-m-d H:i:s') ?></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Visites par serveur (PostgreSQL)</h3>
+      <table>
+        <tr>
+          <td><strong>Total</strong></td>
+          <td><strong><?= (int)$total ?> visites</strong></td>
+        </tr>
+        <?php foreach ($visits as $v): ?>
+        <tr>
+          <td><?= htmlspecialchars($v['server_id']) ?></td>
+          <td><?= (int)$v['total'] ?> visite(s)</td>
+        </tr>
+        <?php endforeach; ?>
+      </table>
+      <p class="tip">
+        Rechargez plusieurs fois — HAProxy alterne entre web1 et web2 (round-robin)
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>Message depuis PostgreSQL</h3>
+      <p style="color:#4ade80;"><?= htmlspecialchars($message ?: 'Aucun message') ?></p>
+    </div>
+
+    <div class="card">
+      <h3>Stack technique</h3>
+      <span class="badge blue">Terraform</span>
+      <span class="badge blue">Ansible</span>
+      <span class="badge blue">GitHub Actions</span>
+      <span class="badge green">Apache 2.4</span>
+      <span class="badge green">PHP 8.2</span>
+      <span class="badge green">PostgreSQL 15</span>
+      <span class="badge green">HAProxy 2.8</span>
+    </div>
+
   </div>
 </body>
 </html>

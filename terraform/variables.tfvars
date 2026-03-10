@@ -1,3 +1,6 @@
-project_name    = "projet-ops"
-http_port       = 8080
-container_image = "php:8.2-apache"
+project_name = "projet-ops"
+db_name      = "appdb"
+db_user      = "appuser"
+web_count    = 2
+haproxy_port = 80
+bastion_port = 2222

@@ -1,7 +1,30 @@
 ---
-- name: Configurer le serveur et déployer l'application
-  hosts: all
-  gather_facts: false
+# Ordre d'exécution :
+#   1. bastion    → SSH jump host
+#   2. postgresql → BDD prête avant les apps
+#   3. apache     → Web apps + connexion PostgreSQL
+#   4. haproxy    → Load balancer configuré en dernier
 
+- name: Configurer le bastion
+  hosts: bastion
+  gather_facts: false
+  roles:
+    - role: ../roles/bastion
+
+- name: Initialiser PostgreSQL
+  hosts: database
+  gather_facts: false
+  roles:
+    - role: ../roles/postgresql
+
+- name: Déployer les serveurs web
+  hosts: webservers
+  gather_facts: false
   roles:
     - role: ../roles/apache
+
+- name: Configurer HAProxy
+  hosts: loadbalancer
+  gather_facts: false
+  roles:
+    - role: ../roles/haproxy

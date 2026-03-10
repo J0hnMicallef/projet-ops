@@ -1,0 +1,42 @@
+---
+- name: Créer dossier tmp Ansible
+  raw: mkdir -p /tmp/.ansible/tmp
+
+- name: Attendre que PostgreSQL soit prêt
+  raw: |
+    for i in $(seq 1 20); do
+      pg_isready -U {{ db_user }} -d {{ db_name }} && exit 0
+      echo "Attente PostgreSQL... ($i/20)"
+      sleep 3
+    done
+    exit 1
+
+- name: Créer les tables de l'application
+  raw: |
+    psql -U {{ db_user }} -d {{ db_name }} << 'EOF'
+    CREATE TABLE IF NOT EXISTS visits (
+      id         SERIAL PRIMARY KEY,
+      server_id  VARCHAR(20) NOT NULL,
+      visited_at TIMESTAMP DEFAULT NOW(),
+      ip_address VARCHAR(45)
+    );
+
+    CREATE TABLE IF NOT EXISTS messages (
+      id         SERIAL PRIMARY KEY,
+      content    TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+
+    INSERT INTO messages (content)
+    SELECT 'Déployé via GitHub Actions → Ansible → Apache + PHP'
+    WHERE NOT EXISTS (SELECT 1 FROM messages LIMIT 1);
+    EOF
+
+- name: Vérifier les tables créées
+  raw: psql -U {{ db_user }} -d {{ db_name }} -c "\dt"
+  register: tables
+  changed_when: false
+
+- name: Afficher les tables
+  debug:
+    msg: "{{ tables.stdout }}"

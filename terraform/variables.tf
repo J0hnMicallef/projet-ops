@@ -3,12 +3,36 @@ variable "project_name" {
   type        = string
 }
 
-variable "http_port" {
-  description = "Port HTTP exposé sur la machine hôte"
-  type        = number
+variable "db_password" {
+  description = "Mot de passe PostgreSQL"
+  type        = string
+  sensitive   = true
 }
 
-variable "container_image" {
-  description = "Image Docker utilisée pour le serveur"
+variable "db_name" {
+  description = "Nom de la base de données"
   type        = string
+}
+
+variable "db_user" {
+  description = "Utilisateur PostgreSQL"
+  type        = string
+}
+
+variable "web_count" {
+  description = "Nombre de serveurs web"
+  type        = number
+  default     = 2
+}
+
+variable "haproxy_port" {
+  description = "Port exposé pour HAProxy (entrée HTTP)"
+  type        = number
+  default     = 80
+}
+
+variable "bastion_port" {
+  description = "Port SSH exposé pour le bastion"
+  type        = number
+  default     = 2222
 }

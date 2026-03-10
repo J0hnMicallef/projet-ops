@@ -11,6 +11,10 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
 
+    env:
+      TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+      DB_PASSWORD:        ${{ secrets.DB_PASSWORD }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,7 +26,7 @@ jobs:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
           terraform_wrapper: false
 
-      # ── TERRAFORM ────────────────────────────────
+      # ── TERRAFORM ──────────────────────────────────────────────────
       - name: terraform init
         working-directory: terraform
         run: terraform init
@@ -39,34 +43,50 @@ jobs:
         working-directory: terraform
         run: terraform apply -var-file="variables.tfvars" -auto-approve
 
-      - name: Vérifier que le conteneur tourne
-        run: docker ps
+      - name: Vérifier les conteneurs créés
+        run: |
+          echo "=== Conteneurs ==="
+          docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+          echo ""
+          echo "=== Réseaux ==="
+          docker network ls | grep projet-ops
 
-      # ── ANSIBLE ──────────────────────────────────
+      # ── ANSIBLE ────────────────────────────────────────────────────
       - name: Installer Ansible
         run: pip install ansible
 
-      - name: Installer Python3 dans le conteneur
+      - name: Installer Python3 dans les conteneurs (requis par Ansible)
         run: |
-          docker exec projet-ops-server apt-get update -qq
-          docker exec projet-ops-server apt-get install -y python3
+          for c in projet-ops-bastion projet-ops-haproxy projet-ops-web1 projet-ops-web2; do
+            echo "→ Python3 dans $c"
+            docker exec $c apt-get update -qq
+            docker exec $c apt-get install -y python3
+          done
 
-      - name: Ansible ping
+      - name: Ansible ping — vérifier la connexion à tous les hosts
         working-directory: ansible
         run: ansible all -i inventory.yml -m ping
 
-      - name: Ansible playbook
+      - name: Ansible — déploiement complet
         working-directory: ansible
         run: ansible-playbook -i inventory.yml playbooks/site.yml -v
 
-      # ── VÉRIFICATION ─────────────────────────────
-      - name: Vérifier le site HTTP
+      # ── VÉRIFICATION ───────────────────────────────────────────────
+      - name: Afficher la page via HAProxy (requête 1 → web1 ou web2)
         run: |
-          sleep 2
-          curl -sf http://localhost:8080
-          echo "Site accessible"
+          echo "=== Requête 1 ==="
+          curl -sf http://localhost:80/app.php
+          echo ""
 
-      - name: Vérifier la page PHP
+      - name: Afficher la page via HAProxy (requête 2 → serveur différent)
         run: |
-          curl -sf http://localhost:8080/app.php
-          echo "PHP fonctionne"
+          echo "=== Requête 2 ==="
+          curl -sf http://localhost:80/app.php
+          echo ""
+
+      - name: Vérifier les visites dans PostgreSQL
+        run: |
+          echo "=== Table visits ==="
+          docker exec projet-ops-postgres \
+            psql -U appuser -d appdb \
+            -c "SELECT server_id, COUNT(*) as total FROM visits GROUP BY server_id;"

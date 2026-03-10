@@ -1,0 +1,29 @@
+global
+    daemon
+    maxconn 256
+
+defaults
+    mode    http
+    timeout connect 5s
+    timeout client  30s
+    timeout server  30s
+    option  httplog
+    option  dontlognull
+
+frontend http_front
+    bind *:80
+    default_backend web_servers
+
+backend web_servers
+    balance roundrobin
+    option  httpchk GET /app.php
+
+{% for server in haproxy_web_servers %}
+    server {{ server.name }} {{ server.ip }}:{{ server.port }} check
+{% endfor %}
+
+listen stats
+    bind *:8404
+    stats enable
+    stats uri /stats
+    stats refresh 10s

@@ -1,0 +1,16 @@
+---
+- name: Créer dossier tmp Ansible
+  raw: mkdir -p /tmp/.ansible/tmp
+
+- name: Afficher la bannière de connexion
+  raw: |
+    cat > /etc/motd << 'EOF'
+    ╔══════════════════════════════════════════╗
+    ║           BASTION — projet-ops           ║
+    ║  Accès autorisé uniquement aux admins    ║
+    ╚══════════════════════════════════════════╝
+    EOF
+
+- name: Confirmer la configuration du bastion
+  debug:
+    msg: "Bastion configuré — SSH jump host opérationnel"

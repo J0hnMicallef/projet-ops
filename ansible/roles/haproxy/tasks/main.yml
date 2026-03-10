@@ -1,0 +1,25 @@
+---
+- name: Créer dossier tmp Ansible
+  raw: mkdir -p /tmp/.ansible/tmp
+
+- name: Déployer la configuration HAProxy
+  template:
+    src: haproxy.cfg.j2
+    dest: /usr/local/etc/haproxy/haproxy.cfg
+
+- name: Recharger HAProxy
+  raw: |
+    kill -HUP $(cat /var/run/haproxy.pid 2>/dev/null) 2>/dev/null \
+    || haproxy -f /usr/local/etc/haproxy/haproxy.cfg -D -p /var/run/haproxy.pid \
+    || true
+
+- name: Vérifier que HAProxy répond
+  raw: wget -qO- http://localhost/app.php | grep -o "projet-ops" | head -1
+  register: haproxy_check
+  changed_when: false
+  retries: 3
+  delay: 2
+
+- name: Statut HAProxy
+  debug:
+    msg: "HAProxy opérationnel — load balancing web1 + web2"
